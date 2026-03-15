@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([]);
   }
 
-  const params = new URLSearchParams({ q, format: 'json', limit: '5', addressdetails: '1' });
+  const params = new URLSearchParams({ q, format: 'json', limit: '5', addressdetails: '1', countrycodes: 'nz' });
   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
     headers: { 'User-Agent': 'UVLensMapApp/1.0' },
   });

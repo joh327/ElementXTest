@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import SearchBar from './SearchBar';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -12,6 +12,15 @@ interface Props {
   selectedLocation: SelectedLocation | null;
   currentUV: number | null;
   onLocationSelect: (loc: SelectedLocation) => void;
+  flyTo: SelectedLocation | null;
+}
+
+function FlyToController({ flyTo }: { flyTo: SelectedLocation | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (flyTo) map.flyTo([flyTo.lat, flyTo.lng], 12, { duration: 1.5 });
+  }, [flyTo, map]);
+  return null;
 }
 
 function createMarkerIcon(uv: number | null) {
@@ -50,7 +59,7 @@ function ClickHandler({ onLocationSelect }: { onLocationSelect: (loc: SelectedLo
   return null;
 }
 
-export default function MapComponent({ selectedLocation, currentUV, onLocationSelect }: Props) {
+export default function MapComponent({ selectedLocation, currentUV, onLocationSelect, flyTo }: Props) {
   const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
@@ -71,6 +80,7 @@ export default function MapComponent({ selectedLocation, currentUV, onLocationSe
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         maxZoom={19}
       />
+      <FlyToController flyTo={flyTo} />
       <SearchBar onLocationSelect={onLocationSelect} />
       <ClickHandler onLocationSelect={onLocationSelect} />
       {selectedLocation && (

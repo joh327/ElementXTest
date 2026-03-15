@@ -8,12 +8,16 @@ import EmptyState from '@/components/UVPanel/EmptyState';
 
 const MapComponent = dynamic(() => import('@/components/Map/MapComponent'), { ssr: false });
 
+const AUCKLAND: SelectedLocation = { lat: -36.8485, lng: 174.7633 };
+
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  const [flyTo, setFlyTo] = useState<SelectedLocation | null>(null);
   const [uvData, setUvData] = useState<UVApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [skinType, setSkinType] = useState(0);
+  const [geolocating, setGeolocating] = useState(true);
 
   const fetchUV = useCallback(async (loc: SelectedLocation, skin: number) => {
     setLoading(true);
@@ -39,6 +43,30 @@ export default function Home() {
     setSelectedLocation(loc);
   }, []);
 
+  // On mount: request geolocation, fall back to Auckland
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setFlyTo(AUCKLAND);
+      handleLocationSelect(AUCKLAND);
+      setGeolocating(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setFlyTo(loc);
+        handleLocationSelect(loc);
+        setGeolocating(false);
+      },
+      () => {
+        setFlyTo(AUCKLAND);
+        handleLocationSelect(AUCKLAND);
+        setGeolocating(false);
+      },
+      { timeout: 8000 }
+    );
+  }, [handleLocationSelect]);
+
   const handleSkinTypeChange = useCallback((v: number) => {
     setSkinType(v);
   }, []);
@@ -53,12 +81,14 @@ export default function Home() {
           selectedLocation={selectedLocation}
           currentUV={currentUV}
           onLocationSelect={handleLocationSelect}
+          flyTo={flyTo}
         />
-        {/* Map hint overlay */}
-        {!selectedLocation && (
+        {/* Geolocation / hint overlay */}
+        {geolocating && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-            <div className="bg-white/90 backdrop-blur-sm text-gray-600 text-sm px-4 py-2 rounded-full shadow-md whitespace-nowrap">
-              Click anywhere to explore UV levels
+            <div className="bg-white/90 backdrop-blur-sm text-gray-600 text-sm px-4 py-2 rounded-full shadow-md flex items-center gap-2 whitespace-nowrap">
+              <div className="w-3 h-3 border-2 border-gray-400 border-t-gray-700 rounded-full animate-spin" />
+              Locating you…
             </div>
           </div>
         )}
